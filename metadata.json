@@ -1,0 +1,10 @@
+{
+  "name": "LUXIA Key",
+  "description": "Application mobile d'identité décentralisée, gestion de Passkeys, alertes d'authentification en temps réel et protection multi-appareils.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
