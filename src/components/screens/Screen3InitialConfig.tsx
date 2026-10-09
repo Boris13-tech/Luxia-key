@@ -4,9 +4,10 @@ import { ScreenId } from '../../types';
 
 interface Screen3InitialConfigProps {
   onNavigate: (screen: ScreenId) => void;
+  onEnrollPasskey?: () => void;
 }
 
-export const Screen3InitialConfig: React.FC<Screen3InitialConfigProps> = ({ onNavigate }) => {
+export const Screen3InitialConfig: React.FC<Screen3InitialConfigProps> = ({ onNavigate, onEnrollPasskey }) => {
   const [selectedMethod, setSelectedMethod] = useState<string>('passkey');
 
   const methods = [
@@ -127,7 +128,14 @@ export const Screen3InitialConfig: React.FC<Screen3InitialConfigProps> = ({ onNa
       {/* Bottom CTA & Later Link */}
       <div className="pt-6 pb-2 space-y-2.5">
         <button
-          onClick={() => onNavigate('dashboard')}
+          onClick={() => {
+            if (selectedMethod === 'passkey' && onEnrollPasskey) {
+              onEnrollPasskey();
+              onNavigate('dashboard');
+            } else {
+              onNavigate('dashboard');
+            }
+          }}
           className="w-full py-3.5 px-6 rounded-2xl bg-gradient-to-r from-cyan-500 via-sky-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white font-semibold text-sm shadow-lg shadow-cyan-500/25 active:scale-[0.98] transition-all flex items-center justify-center gap-2 group"
         >
           <span>Continuer</span>

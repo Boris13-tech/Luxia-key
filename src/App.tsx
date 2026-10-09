@@ -74,6 +74,10 @@ export default function App() {
   const [pendingAuth, setPendingAuth] = useState<AuthRequestData | null>(INITIAL_AUTH_REQUEST);
   const [sensitiveAction, setSensitiveAction] = useState<SensitiveActionData>(INITIAL_SENSITIVE_ACTION);
 
+  // Security Mode: 'real' vs 'demo'
+  const [securityMode, setSecurityMode] = useState<'real' | 'demo'>('real');
+  const [biometricActionType, setBiometricActionType] = useState<'authenticate' | 'register'>('authenticate');
+
   // Modals
   const [isBiometricModalOpen, setIsBiometricModalOpen] = useState(false);
   const [biometricTitle, setBiometricTitle] = useState('Confirmation Biométrique');
@@ -99,9 +103,23 @@ export default function App() {
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId) || accounts[0] || null;
 
   // Handlers for App Actions
+  const handleRegisterPasskeyHardware = () => {
+    setBiometricActionType('register');
+    setBiometricTitle('Enrôlement Passkey FIDO2');
+    setBiometricSubtitle('Votre système génère une clé matérielle dans le Secure Enclave.');
+    setBiometricCallback(() => () => {
+      showToast('Passkey matérielle WebAuthn créée et enregistrée avec succès !');
+      try {
+        confetti({ particleCount: 50, spread: 70 });
+      } catch {}
+    });
+    setIsBiometricModalOpen(true);
+  };
+
   const handleQuickApproveAuth = () => {
-    setBiometricTitle('Approbation de connexion');
-    setBiometricSubtitle('Face ID vérifie votre identité pour approuver Instagram.');
+    setBiometricActionType('authenticate');
+    setBiometricTitle('Vérification Passkey WebAuthn');
+    setBiometricSubtitle('Validation matérielle de la demande d\'accès.');
     setBiometricCallback(() => () => {
       setPendingAuth(null);
       const newAct: SecurityActivity = {
@@ -118,11 +136,11 @@ export default function App() {
           device: 'iPhone 17 Pro',
           browser: 'Safari',
           riskLevel: 'Faible',
-          notes: 'Connexion autorisée par authentification biométrique Face ID.',
+          notes: 'Connexion autorisée par authentification cryptographique WebAuthn.',
         },
       };
       setActivities([newAct, ...activities]);
-      showToast('Connexion Instagram approuvée avec succès !');
+      showToast('Connexion Instagram approuvée par Passkey matérielle !');
       if (currentScreen === 'auth-request') {
         setCurrentScreen('dashboard');
       }
@@ -281,7 +299,12 @@ export default function App() {
       case 'create-identity':
         return <Screen2CreateIdentity onNavigate={setCurrentScreen} />;
       case 'initial-config':
-        return <Screen3InitialConfig onNavigate={setCurrentScreen} />;
+        return (
+          <Screen3InitialConfig
+            onNavigate={setCurrentScreen}
+            onEnrollPasskey={handleRegisterPasskeyHardware}
+          />
+        );
       case 'dashboard':
         return (
           <Screen4Dashboard
@@ -444,6 +467,36 @@ export default function App() {
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none" />
           </div>
 
+          {/* SECURITY_MODE Selector */}
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-xl bg-slate-950 border border-slate-800 text-[11px]">
+            <span className="text-slate-400 font-mono text-[10px] hidden sm:inline">MODE:</span>
+            <button
+              onClick={() => {
+                const next = securityMode === 'real' ? 'demo' : 'real';
+                setSecurityMode(next);
+                showToast(next === 'real' ? 'Mode RÉEL activé (WebAuthn FIDO2 matériel)' : 'Mode DÉMO activé (Simulation)');
+              }}
+              className={`px-2 py-0.5 rounded-lg font-mono font-bold transition-colors ${
+                securityMode === 'real'
+                  ? 'bg-cyan-950 text-cyan-300 border border-cyan-500/50'
+                  : 'bg-amber-950 text-amber-300 border border-amber-500/50'
+              }`}
+              title="Basculer entre vérification matérielle WebAuthn réelle et mode démonstration"
+            >
+              {securityMode === 'real' ? 'REAL' : 'DEMO'}
+            </button>
+          </div>
+
+          {/* Quick Real Passkey Enrollment Trigger */}
+          <button
+            onClick={handleRegisterPasskeyHardware}
+            className="hidden xl:flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-cyan-950/60 hover:bg-cyan-900/60 border border-cyan-500/40 text-cyan-300 text-xs font-medium transition-colors"
+            title="Générer une nouvelle Passkey matérielle FIDO2"
+          >
+            <Shield className="w-3.5 h-3.5" />
+            <span>Enrôler Passkey</span>
+          </button>
+
           {/* Quick Simulation Triggers */}
           <button
             onClick={() => {
@@ -583,6 +636,8 @@ export default function App() {
         isOpen={isBiometricModalOpen}
         title={biometricTitle}
         subtitle={biometricSubtitle}
+        securityMode={securityMode}
+        actionType={biometricActionType}
         onSuccess={() => {
           setIsBiometricModalOpen(false);
           if (biometricCallback) biometricCallback();
