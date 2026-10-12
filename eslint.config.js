@@ -1,6 +1,6 @@
 import tseslint from 'typescript-eslint';
 export default tseslint.config(
-  { ignores: ['dist/**', 'node_modules/**', 'coverage/**'] },
+  { ignores: ['dist/**', 'node_modules/**', '.pnpm-store-local/**', 'coverage/**'] },
   { files: ['**/*.ts', '**/*.tsx'], languageOptions: { parser: tseslint.parser }, rules: {
     'no-debugger': 'error', 'no-eval': 'error', 'no-implied-eval': 'error',
   } },

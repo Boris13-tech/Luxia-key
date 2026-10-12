@@ -3,7 +3,7 @@
 import { generateKeyPairSync, randomBytes, createHash, sign } from 'node:crypto';
 import { Encoder } from 'cbor-x';
 import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
-const encoder = new Encoder({ useRecords: false });
+const encoder = new Encoder({ useRecords: false, mapsAsObjects: false, tagUint8Array: false });
 export function authenticator() {
   const { publicKey, privateKey } = generateKeyPairSync('ec',{ namedCurve: 'prime256v1' });
   const jwk = publicKey.export({ format: 'jwk' });
