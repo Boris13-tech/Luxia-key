@@ -1,0 +1,70 @@
+name: Foundation
+on:
+  push:
+    branches: [main, 'feat/**']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+concurrency:
+  group: foundation-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  foundation:
+    name: Foundation gates
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17.6
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: local-ci-only
+          POSTGRES_DB: luxia_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U postgres -d luxia_test"
+          --health-interval 5s --health-timeout 5s --health-retries 12
+    env:
+      TEST_DATABASE_URL: postgresql://postgres:local-ci-only@localhost:5432/luxia_test
+      DATABASE_URL: postgresql://postgres:local-ci-only@localhost:5432/luxia_test
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+      - uses: actions/setup-node@a0853c24544627f65ddf259abe73b1d18a591444 # v5
+        with:
+          node-version-file: .node-version
+      - name: Pinned package manager
+        run: corepack enable && corepack prepare pnpm@11.20.0 --activate
+      - name: Frozen install
+        run: pnpm install --frozen-lockfile
+      - name: Typecheck
+        run: pnpm typecheck
+      - name: Lint
+        run: pnpm lint
+      - name: Unit tests
+        run: pnpm test:unit
+      - name: Security tests
+        run: pnpm test:security
+      - name: PostgreSQL integration and cryptographic security tests
+        run: pnpm test:integration
+      - name: Restart persistence marker
+        run: pnpm exec tsx tests/persistence-probe.ts write
+      - name: Restart PostgreSQL process
+        run: docker restart ${{ job.services.postgres.id }}
+      - name: Verify persistence after restart
+        run: pnpm exec tsx tests/persistence-probe.ts read
+      - name: Build
+        run: pnpm build
+      - name: Dependency audit (high and critical block)
+        run: pnpm audit --audit-level=high
+  secrets:
+    name: Secret scan
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@dcedce43c6f43de0b836d1fe38946645c9c638dc # v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

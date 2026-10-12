@@ -1,0 +1,145 @@
+{
+  "commit": "4d61d941b94111f0977056a840827e97e092f73c",
+  "files": [
+    {
+      "path": "index.html",
+      "gitBlob": "df0a3e61fe4c4b4ccf622d297e5963ad7c3adfe7"
+    },
+    {
+      "path": "metadata.json",
+      "gitBlob": "3a5f16d4ff5c10cd7e23e4eb1f87a21f3aea4a54"
+    },
+    {
+      "path": "src/App.tsx",
+      "gitBlob": "612fa4be58a47c779364cc75d369f473346ecd46"
+    },
+    {
+      "path": "src/components/ScreenGallery.tsx",
+      "gitBlob": "153b522cf283346641f211b6b7c2dd25127f1b20"
+    },
+    {
+      "path": "src/components/common/BiometricModal.tsx",
+      "gitBlob": "877e90859edee7e8da6ba816a81220f56e9c29c7"
+    },
+    {
+      "path": "src/components/common/BottomNavBar.tsx",
+      "gitBlob": "615eafd68cec0137616f86329f6ee58d629b48dc"
+    },
+    {
+      "path": "src/components/common/BrandIcon.tsx",
+      "gitBlob": "ff973900db8ef28c27d49faa45a8abfe1b4a84d6"
+    },
+    {
+      "path": "src/components/common/PhoneFrame.tsx",
+      "gitBlob": "1b27a48bbe371f12f1f264d01e76267e05bba841"
+    },
+    {
+      "path": "src/components/common/StatusBar.tsx",
+      "gitBlob": "51bd6a9f0ce045b4964ed9dbb17369d78ba87328"
+    },
+    {
+      "path": "src/components/modals/AddAccountModal.tsx",
+      "gitBlob": "2ec7566bdd80d3fa86de51369de64ec60ec2efc4"
+    },
+    {
+      "path": "src/components/modals/PairDeviceModal.tsx",
+      "gitBlob": "fc74c8d2dae535ebc7df3e4d130b69efd47ac0b7"
+    },
+    {
+      "path": "src/components/modals/QrIdentityModal.tsx",
+      "gitBlob": "65c8ab0be3da601f3149364a980a0097de8afb35"
+    },
+    {
+      "path": "src/components/modals/RecoveryCodesModal.tsx",
+      "gitBlob": "9556051589d6e507427cfa7ec2ca580d28d21d50"
+    },
+    {
+      "path": "src/components/modals/TotpGeneratorModal.tsx",
+      "gitBlob": "73fb203b68456b9b11e9f5c1120f7f780d2f33fe"
+    },
+    {
+      "path": "src/components/screens/Screen10SensitiveAction.tsx",
+      "gitBlob": "55e03442fdccb5bf060fe9b780886d7802b4e9c3"
+    },
+    {
+      "path": "src/components/screens/Screen11Activity.tsx",
+      "gitBlob": "1aa33a24b71a3b941717a718c0b0787ebfb2d2e1"
+    },
+    {
+      "path": "src/components/screens/Screen12Security.tsx",
+      "gitBlob": "5cc3a5f7af31380cebabc7dc47f03dbe5bba4399"
+    },
+    {
+      "path": "src/components/screens/Screen13Lockdown.tsx",
+      "gitBlob": "9f87276d5fabf6b792b3de792be8e41fb753a5f2"
+    },
+    {
+      "path": "src/components/screens/Screen14Recovery.tsx",
+      "gitBlob": "6d45aafe2164a0b32084f364046494624d37abc7"
+    },
+    {
+      "path": "src/components/screens/Screen15Identity.tsx",
+      "gitBlob": "ed9a43d7b3011a122274026ca2a45d40b20b76e3"
+    },
+    {
+      "path": "src/components/screens/Screen16Settings.tsx",
+      "gitBlob": "7037ed85f0f36bc8cdcd0cf313b5e334a0db772a"
+    },
+    {
+      "path": "src/components/screens/Screen1Splash.tsx",
+      "gitBlob": "5e461c02631c121eae4618e5c01f7f165a943d27"
+    },
+    {
+      "path": "src/components/screens/Screen2CreateIdentity.tsx",
+      "gitBlob": "dbba68723f942317354a59114218dbd9579189e0"
+    },
+    {
+      "path": "src/components/screens/Screen3InitialConfig.tsx",
+      "gitBlob": "6e926577fcac411b05a7579c7414cba2cb92ed51"
+    },
+    {
+      "path": "src/components/screens/Screen4Dashboard.tsx",
+      "gitBlob": "0d86d044af06041504e409dd36ffac82726376fc"
+    },
+    {
+      "path": "src/components/screens/Screen5Accounts.tsx",
+      "gitBlob": "368549b8d733e0eaf26428ec274cb2578a40c568"
+    },
+    {
+      "path": "src/components/screens/Screen6AccountDetail.tsx",
+      "gitBlob": "a7580c49d32fbc5534cd2c77543fa240f60518cf"
+    },
+    {
+      "path": "src/components/screens/Screen7Devices.tsx",
+      "gitBlob": "831c1e415db790831eb43fa9948245e3950f9eac"
+    },
+    {
+      "path": "src/components/screens/Screen8AuthRequest.tsx",
+      "gitBlob": "c207c5bdd3064b197551a2b30744da6f9dfecb10"
+    },
+    {
+      "path": "src/components/screens/Screen9Scanner.tsx",
+      "gitBlob": "6b28d5d500b20dabfe25a45275425c6948a5e801"
+    },
+    {
+      "path": "src/data/mockData.ts",
+      "gitBlob": "d1d936cc44af57fa19f03188c0f82359095946a8"
+    },
+    {
+      "path": "src/index.css",
+      "gitBlob": "94f7fcb62653c27883bf33999f81552aa9289ea5"
+    },
+    {
+      "path": "src/main.tsx",
+      "gitBlob": "c1d9f920661cb84283eeabccd6ac72fe4233460c"
+    },
+    {
+      "path": "src/types/index.ts",
+      "gitBlob": "f039b87f27074536a3c9c5e37a2089338671562e"
+    },
+    {
+      "path": "vite.config.ts",
+      "gitBlob": "9eb85fa10b6197d8ea5f41dfe984222f6219ae36"
+    }
+  ]
+}

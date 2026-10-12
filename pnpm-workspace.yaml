@@ -1,0 +1,7 @@
+packages:
+  - apps/*
+  - services/*
+  - packages/*
+allowBuilds:
+  cbor-extract: false
+  esbuild: true
