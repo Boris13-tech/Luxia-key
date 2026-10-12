@@ -1,0 +1,43 @@
+{
+  "id": 24933031,
+  "name": "LUXIA Key security findings gate",
+  "target": "branch",
+  "source_type": "Repository",
+  "source": "Boris13-tech/Luxia-key",
+  "enforcement": "active",
+  "conditions": {
+    "ref_name": {
+      "exclude": [],
+      "include": [
+        "~DEFAULT_BRANCH"
+      ]
+    }
+  },
+  "rules": [
+    {
+      "type": "code_scanning",
+      "parameters": {
+        "code_scanning_tools": [
+          {
+            "tool": "CodeQL",
+            "security_alerts_threshold": "high_or_higher",
+            "alerts_threshold": "errors"
+          }
+        ]
+      }
+    }
+  ],
+  "node_id": "RRS_lACqUmVwb3NpdG9yec5UF-EHzgF8cqc",
+  "created_at": "2026-10-12T17:21:52.618+03:00",
+  "updated_at": "2026-10-12T17:21:52.649+03:00",
+  "bypass_actors": [],
+  "current_user_can_bypass": "never",
+  "_links": {
+    "self": {
+      "href": "https://api.github.com/repos/Boris13-tech/Luxia-key/rulesets/24933031"
+    },
+    "html": {
+      "href": "https://github.com/Boris13-tech/Luxia-key/rules/24933031"
+    }
+  }
+}

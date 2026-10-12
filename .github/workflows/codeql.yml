@@ -21,3 +21,28 @@ jobs:
           languages: javascript-typescript
           build-mode: none
       - uses: github/codeql-action/analyze@cf12ceefebab2c867b9c35d7f907e059681d37ab # v3
+        with:
+          category: .github/workflows/codeql.yml:analyze
+  baseline:
+    name: CodeQL historical main baseline
+    if: github.event_name == 'push' && github.ref == 'refs/heads/feat/lk-foundation-001'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: 4d61d941b94111f0977056a840827e97e092f73c
+      - name: Confirm immutable historical baseline
+        run: test "$(git rev-parse HEAD)" = "4d61d941b94111f0977056a840827e97e092f73c"
+      - uses: github/codeql-action/init@cf12ceefebab2c867b9c35d7f907e059681d37ab # v3
+        with:
+          languages: javascript-typescript
+          build-mode: none
+      - uses: github/codeql-action/analyze@cf12ceefebab2c867b9c35d7f907e059681d37ab # v3
+        with:
+          ref: refs/heads/main
+          sha: 4d61d941b94111f0977056a840827e97e092f73c
+          category: .github/workflows/codeql.yml:analyze

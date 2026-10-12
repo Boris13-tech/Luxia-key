@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ChevronLeft, ShieldCheck, Bell, Shield, KeyRound, ExternalLink, Info, Trash2, Settings, Check } from 'lucide-react';
 import { ScreenId, AccountItem } from '../../types';
 import { BrandIcon } from '../common/BrandIcon';
+import { externalWebsiteURL } from '../../../packages/contracts/external-website';
 
 interface Screen6AccountDetailProps {
   account: AccountItem | null;
@@ -115,7 +116,7 @@ export const Screen6AccountDetail: React.FC<Screen6AccountDetailProps> = ({
           <div className="flex items-center justify-between py-1 text-xs">
             <span className="text-slate-400">Site web</span>
             <a
-              href={`https://${account.website}`}
+              href={externalWebsiteURL(account.website)}
               target="_blank"
               rel="noreferrer"
               className="text-cyan-400 hover:text-cyan-300 font-medium flex items-center gap-1"

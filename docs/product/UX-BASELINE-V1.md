@@ -1,7 +1,7 @@
 # LUXIA Key Personal — UX Baseline V1
 
 Official reference: existing Google AI Studio React UI at main commit 4d61d941b94111f0977056a840827e97e092f73c.
-Exact UI files and Git object hashes: UX-BASELINE-MANIFEST.json. All src files, index.html, metadata.json and vite.config.ts remain unchanged. Dependency locking is a separately reviewed reproducibility change.
+Exact original UI files and Git object hashes: UX-BASELINE-MANIFEST.json. All original files remain unchanged except the narrowly constrained Screen6AccountDetail website security correction documented in UX-SECURITY-PATCHES.md. The historical baseline itself is unchanged. Dependency locking is a separately reviewed reproducibility change.
 
 | Screen | Experience |
 |---|---|
