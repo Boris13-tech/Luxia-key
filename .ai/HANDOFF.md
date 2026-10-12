@@ -1,19 +1,19 @@
 # LK-FOUNDATION-001 handoff
 
 PROJECT: LUXIA Key
-TASK: LK-FOUNDATION-001
+TASK: LK-REMEDIATION-001
 OWNER: Codex
 BASE SHA: 4d61d941b94111f0977056a840827e97e092f73c
-HEAD SHA: 114983e22513f7a33be8d0908505501d3260f5c0 (verified follow-up implementation checkpoint; subsequent handoff-only commit is resolved by `git rev-parse HEAD`)
+HEAD SHA: be526ac341ad139f4140bb6eb8dd74e6abc0b501 (original independently reviewed remediation base; current task HEAD is resolved by git rev-parse HEAD and PR 1)
 BRANCH: feat/lk-foundation-001
-STATUS: foundation and authorized governance follow-up verified; independent architectural approval required; no Phase 2 work
+STATUS: correcting R1–R4 under autonomous Foundation mandate; new exact-head CI and LK-REVIEW-002 pending; no Phase 2 work
 FILES MODIFIED: package/toolchain configuration, .env.example/.gitignore; added governance, architecture/product/security/protocol/testing docs, services/api, packages/sdk-js, conceptual design tokens, tests, CI and reserved target READMEs. Follow-up adds infra/github policy/evidence, HTTPS URL contract, tests and exactly two changed lines in Screen6AccountDetail. Original UX manifest and every other baseline file unchanged.
-ARCHITECTURE DECISIONS: new clean main-based history; isolated prototype; explicit trusted RP/origin; mandatory UV; new pseudonymous identity enrollment only; PostgreSQL transaction boundary; hash-only sessions; flow-cookie binding; fixed audit schema.
+ARCHITECTURE DECISIONS: preserve the original architecture and UX; ADR 0001 owns explicit immutable runtime/cookie policy, shared V1 ES256/RS256 allowlist, read-only exact migration manifest startup gate and bounded-attempt challenge semantics. No custom crypto or implicit production migration.
 MIGRATIONS: 001_foundation.sql, seven required domain tables plus checksummed migration metadata. Explicit migration command; no production execution.
-TEST RESULTS: frozen install, typecheck, lint, 23 unit tests, 19 security tests, 24 PostgreSQL integration tests, database-process restart persistence, build, secret scan and dependency audit PASS in GitHub. Local updated unit/security/typecheck/lint/build also PASS. Synthetic signed credential fixtures are not physical authenticator certification.
-CI STATE: Foundation run 38262920821 and CodeQL run 38262920881 succeeded on the checkpoint; latest CodeQL analysis 1936906254 reported zero findings and alert 1 is fixed for the feature branch without dismissal/suppression. The immutable existing main commit was also truthfully scanned to bootstrap the target-branch scanning gate. Check latest head in PR 1 before any review/merge action.
+TEST RESULTS: local remediation frozen install/typecheck/lint/build/audit passed; 30 unit and 34 security tests passed before the final small metadata-refusal test addition. Real PostgreSQL startup/lifecycle/session/algorithm regressions are pending new exact-head CI; no mocked test is called SQL or physical certification.
+CI STATE: previous original reviewed HEAD gates passed; this remediation needs its own exact-head Foundation/Secret scan/CodeQL evidence. Independent LK-REVIEW-001 found three P2 and one P3 despite the prior green gates. Do not reuse old review or CI for this new code.
 KNOWN ISSUES: prototype remains demo; no real web integration, physical authenticator certification, deployment or production operational controls. Local Docker daemon unavailable; PostgreSQL evidence came from disposable GitHub service containers. Existing Vite config deprecation and large-chunk warnings remain documented. Main code remains the historical baseline pending approved merge; its historical scanner finding is not rewritten or dismissed.
-BLOCKERS: independent architectural/security approval by an eligible separate reviewer (only repository owner currently configured); physical authenticator and operational certification before release. Main protection and ruleset 24933031 are now active and verified. No implementation gate failure at checkpoint.
-NEXT EXACT STEP: independent reviewer consumes docs/governance/FOUNDATION-REVIEW.md and PR https://github.com/Boris13-tech/Luxia-key/pull/1, verifies latest checks and architecture/HTTPS patch, then records approval. Do not self-approve, bypass protections, merge, tag, deploy or start Phase 2 automatically.
+BLOCKERS: no external blocker prevents automated remediation/CI/review. Eligible separate GitHub approval and real authenticator/human UV remain later external gates. Main protection and ruleset 24933031 remain active. Production operational certification is a later release gate, not a premature Foundation-merge requirement.
+NEXT EXACT STEP: commit/push the remediation to feat/lk-foundation-001, obtain all new exact-head automated gates including real PostgreSQL startup tests, then launch a distinct LK-REVIEW-002 agent. Fix any in-scope failures autonomously, never self-approve, bypass protection, merge, deploy or start Phase 2. Current sealed results/reviewer reports are exported outside the Git tree to avoid self-referential HEAD hashes.
 PRODUCTION TOUCHED: NO
 SECRETS EXPOSED: NO

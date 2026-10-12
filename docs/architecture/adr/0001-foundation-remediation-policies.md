@@ -1,0 +1,13 @@
+# ADR 0001 — Fail-closed Foundation remediation policies
+
+Task: LK-REMEDIATION-001. Original reviewed HEAD: be526ac341ad139f4140bb6eb8dd74e6abc0b501. Decision implemented under autonomous mandate; independent review of the new exact HEAD is still required.
+
+R1: LUXIA_RUNTIME_MODE is mandatory and server-owned: development/test/staging/production. NODE_ENV and request headers have no security authority. Normalize, validate and freeze config; public origins are disallowed in development/test. The conservative explicit local exception is localhost, 127.0.0.1 or [::1]. Staging/production always uses HTTPS, Secure HttpOnly __Host-luxia_session/__Host-luxia_flow, SameSite=Strict, Path=/, no Domain. No topology exception is needed for the same-origin deployment model. Existing dev callers must supply explicit mode; silently accepting their old implicit mode would retain R1.
+
+R2: immutable V1 algorithm tuple [-7,-257] is authoritative and cloned into both library calls. Do not infer policy from library defaults. Standard Node crypto and CBOR fixtures exercise P-256/RSA success and Ed25519/unknown denial; no custom algorithm or new production crypto capability is introduced.
+
+R3: reviewed migration manifest pins version 1 and normalized-LF SQL SHA-256 checksum. Explicit migration validates bundled bytes and refuses unknown applied metadata. Startup is read-only and requires exactly the supported manifest; any missing/empty/extra/old/future/mismatched/unreadable state aborts before listener invocation. Manifest changes require a reviewed migration/compatibility decision, not an edit to silence tests. Real SQL startup tests use dedicated luxia_test schemas and temporary roles, including permission and timeout failures.
+
+R4: distinguish malformed/unparseable/unbound requests from valid-shaped bound verification attempts. The former deny without consuming a legitimate browser's nonce. The latter atomically consume once before crypto; any subsequent failure leaves the nonce burned. Successful replay always denies. The prior all-failures-burn statement was overly broad; formalizing this boundary avoids both that ambiguity and unrelated-client denial of service. New real SQL tests prove malformed-then-valid behavior, binding isolation and failed-crypto retry denial.
+
+Consequences: no UX/source-baseline change, new product capability, production deployment, Phase 2 work or automatic main merge. All previous denial/UV/RP/origin/session/audit tests remain. Local unit doubles are labeled and supplement real PostgreSQL CI; neither synthetic nor virtual credentials imply physical authenticator certification.

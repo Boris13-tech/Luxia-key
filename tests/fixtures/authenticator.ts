@@ -4,8 +4,9 @@ import { generateKeyPairSync, randomBytes, createHash, sign } from 'node:crypto'
 import { Encoder } from 'cbor-x';
 import type { RegistrationResponseJSON, AuthenticationResponseJSON } from '@simplewebauthn/server';
 const encoder = new Encoder({ useRecords: false, mapsAsObjects: false, tagUint8Array: false });
-export function authenticator() {
-  const { publicKey, privateKey } = generateKeyPairSync('ec',{ namedCurve: 'prime256v1' });
+export function authenticator(algorithm: -7 | -257 | -8 = -7,encodedAlgorithm: number = algorithm) {
+  const { publicKey, privateKey } = algorithm === -257 ? generateKeyPairSync('rsa',{ modulusLength: 2048 }) :
+    algorithm === -8 ? generateKeyPairSync('ed25519') : generateKeyPairSync('ec',{ namedCurve: 'prime256v1' });
   const jwk = publicKey.export({ format: 'jwk' });
   const id = randomBytes(32);
   let user = '';
@@ -19,7 +20,11 @@ export function authenticator() {
     id: id.toString('base64url'),
     registration(challenge: string,userID: string,origin = 'http://localhost:3000',rp = 'localhost',uv = true): RegistrationResponseJSON {
       user = userID;
-      const cose = encoder.encode(new Map<number,number | Buffer>([[1,2],[3,-7],[-1,1],[-2,Buffer.from(jwk.x!,'base64url')],[-3,Buffer.from(jwk.y!,'base64url')]]));
+      const key: [number,number | Buffer][] = algorithm === -257
+        ? [[1,3],[3,encodedAlgorithm],[-1,Buffer.from(jwk.n!,'base64url')],[-2,Buffer.from(jwk.e!,'base64url')]]
+        : algorithm === -8 ? [[1,1],[3,encodedAlgorithm],[-1,6],[-2,Buffer.from(jwk.x!,'base64url')]]
+          : [[1,2],[3,encodedAlgorithm],[-1,1],[-2,Buffer.from(jwk.x!,'base64url')],[-3,Buffer.from(jwk.y!,'base64url')]];
+      const cose = encoder.encode(new Map<number,number | Buffer>(key));
       const size = Buffer.alloc(2); size.writeUInt16BE(id.length);
       const authData = Buffer.concat([data(rp,uv,true),Buffer.alloc(16),size,id,cose]);
       const attestation = encoder.encode(new Map<string,unknown>([['fmt','none'],['attStmt',new Map()],['authData',authData]]));
@@ -32,7 +37,7 @@ export function authenticator() {
       const authData = data(rp,uv,false);
       return { id: id.toString('base64url'),rawId: id.toString('base64url'),type: 'public-key',clientExtensionResults: {},
         response: { clientDataJSON: client.toString('base64url'),authenticatorData: authData.toString('base64url'),
-          signature: sign('sha256',Buffer.concat([authData,digest(client)]),privateKey).toString('base64url'),userHandle: user } };
+          signature: sign(algorithm === -8 ? null : 'sha256',Buffer.concat([authData,digest(client)]),privateKey).toString('base64url'),userHandle: user } };
     },
   };
 }

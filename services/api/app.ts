@@ -3,17 +3,18 @@ import { randomUUID } from 'node:crypto';
 import { parse } from 'cookie';
 import { rateLimit } from 'express-rate-limit';
 import type { Pool } from 'pg';
-import type { Config } from './config.js';
+import { validateConfig, type Config } from './config.js';
+import { cookiePolicy } from './cookies.js';
+import { validVerificationEnvelope } from './verification-envelope.js';
 import { WebAuthn, Denied } from './webauthn.js';
 import { findSession, token, sessionSeconds } from './sessions.js';
 import { transaction } from './db.js';
 import { audit, type Operation } from './audit.js';
-export function app(db: Pool, cfg: Config) {
+export function app(db: Pool, input: Config) {
+  const cfg = validateConfig(input);
   const api = express();
   const webauthn = new WebAuthn(db,cfg);
-  const sessionName = cfg.production ? '__Host-luxia_session' : 'luxia_session';
-  const bindingName = cfg.production ? '__Host-luxia_flow' : 'luxia_flow';
-  const cookie = { httpOnly: true, secure: cfg.production, sameSite: 'strict' as const, path: '/' };
+  const { sessionName,bindingName,attributes: cookie } = cookiePolicy(cfg);
   api.disable('x-powered-by');
   api.use((_req,res,next) => {
     res.locals.correlation = randomUUID();
@@ -46,7 +47,8 @@ export function app(db: Pool, cfg: Config) {
     res.locals.operation = `${purpose}.verify`;
     try {
       const cookies = parse(req.headers.cookie ?? '');
-      if (!req.body?.response?.clientDataJSON || typeof req.body.id !== 'string') throw new Denied();
+      // Malformed envelopes do not establish a bound verification attempt and do not consume a nonce.
+      if (!validVerificationEnvelope(req.body,purpose)) throw new Denied();
       if (purpose === 'registration') {
         const result = await webauthn.register(req.body,req.get('origin')!,cookies[bindingName] ?? '',res.locals.correlation);
         res.clearCookie(bindingName,cookie).json(result);

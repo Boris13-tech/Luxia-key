@@ -5,10 +5,12 @@ import { pool,migrate } from '../../services/api/db.js';
 import { app } from '../../services/api/app.js';
 import { authenticator } from '../fixtures/authenticator.js';
 import { hash } from '../../services/api/sessions.js';
+import { config } from '../../services/api/config.js';
+import { WEBAUTHN_ALGORITHMS } from '../../services/api/algorithm-policy.js';
 const url = process.env.TEST_DATABASE_URL;
 if (!url || !new URL(url).pathname.endsWith('/luxia_test')) throw new Error('Dedicated TEST_DATABASE_URL ending /luxia_test required; tests never skip');
 const db = pool(url);
-const cfg = { rpID: 'localhost',origins: ['http://localhost:3000'],production: false };
+const cfg = config({ LUXIA_RUNTIME_MODE: 'test',WEBAUTHN_RP_ID: 'localhost',WEBAUTHN_ALLOWED_ORIGINS: 'http://localhost:3000' });
 let api = app(db,cfg);
 const origin = cfg.origins[0];
 const post = (path: string,body: object = {},cookie = '') => request(api).post(`/api/${path}`).set('Origin',origin).set('X-Luxia-Request','1').set('Cookie',cookie).send(body);
@@ -16,11 +18,12 @@ const cookies = (res: { headers: Record<string,unknown> }) => (res.headers['set-
 beforeAll(async () => { await migrate(db); });
 beforeEach(() => { api = app(db,cfg); }); // Isolated HTTP server/rate-limit state per case.
 afterAll(async () => { await db.end(); });
-async function enrolled() {
-  const auth = authenticator();
+async function enrolled(algorithm: -7 | -257 = -7) {
+  const auth = authenticator(algorithm);
   const options = await post('webauthn/register/options',{ displayName: `test-${randomUUID()}` });
   expect(options.status).toBe(200);
   expect(options.body.options.authenticatorSelection.userVerification).toBe('required');
+  expect(options.body.options.pubKeyCredParams.map((p: { alg: number }) => p.alg)).toEqual([...WEBAUTHN_ALGORITHMS]);
   const response = auth.registration(options.body.options.challenge,options.body.options.user.id);
   const result = await post('webauthn/register/verify',response,cookies(options));
   expect(result.status).toBe(200);
@@ -121,7 +124,7 @@ it('revoked credentials and missing state invalidate existing sessions',async ()
   expect((await post('session/read',{},logged2.session)).status).toBe(401);
 });
 it('production cookies have Secure and __Host attributes',async () => {
-  const prod = app(db,{ rpID: 'example.com',origins: ['https://example.com'],production: true });
+  const prod = app(db,config({ LUXIA_RUNTIME_MODE: 'production',WEBAUTHN_RP_ID: 'example.com',WEBAUTHN_ALLOWED_ORIGINS: 'https://example.com' }));
   const result = await request(prod).post('/api/webauthn/register/options').set('Origin','https://example.com').set('X-Luxia-Request','1').send({});
   expect(result.status).toBe(200);
   expect(String(result.headers['set-cookie'])).toContain('__Host-luxia_flow=');
@@ -133,4 +136,61 @@ it('unavailable database denies without fallback or raw diagnostic leakage',asyn
   expect(result.status).toBe(503);
   expect(result.body.error).toBe('DEPENDENCY_UNAVAILABLE');
   expect(JSON.stringify(result.body)).not.toContain(url);
+});
+it.each([-7,-257] as const)('advertised algorithm %s registers and authenticates with real library/SQL',async algorithm => {
+  const { auth } = await enrolled(algorithm); await login(auth);
+});
+it.each([-8,12345] as const)('unoffered COSE algorithm %s is denied, not stored, and burns the bound challenge',async algorithm => {
+  const auth = algorithm === -8 ? authenticator(-8) : authenticator(-7,algorithm);
+  const options = await post('webauthn/register/options');
+  const ch = options.body.options.challenge;
+  const body = auth.registration(ch,options.body.options.user.id);
+  expect((await post('webauthn/register/verify',body,cookies(options))).status).toBe(401);
+  expect((await db.query('SELECT id FROM credentials WHERE id=$1',[auth.id])).rowCount).toBe(0);
+  expect((await db.query('SELECT used_at FROM authentication_challenges WHERE challenge=$1',[ch])).rows[0].used_at).not.toBeNull();
+  expect((await post('webauthn/register/verify',body,cookies(options))).status).toBe(401);
+});
+it.each(['missing-id','array','invalid-client-data'] as const)('malformed %s leaves challenge available for a valid bound request',async kind => {
+  const auth = authenticator(); const options = await post('webauthn/register/options');
+  const ch = options.body.options.challenge; const body = auth.registration(ch,options.body.options.user.id);
+  const malformed = kind === 'missing-id' ? { ...body,id: undefined } : kind === 'array' ? [] :
+    { ...body,response: { ...body.response,clientDataJSON: 'not-json' } };
+  expect((await post('webauthn/register/verify',malformed,cookies(options))).status).toBe(401);
+  expect((await db.query('SELECT used_at FROM authentication_challenges WHERE challenge=$1',[ch])).rows[0].used_at).toBeNull();
+  expect((await post('webauthn/register/verify',body,cookies(options))).status).toBe(200);
+  expect((await post('webauthn/register/verify',body,cookies(options))).status).toBe(401);
+});
+it('wrong browser binding cannot burn another browser challenge',async () => {
+  const auth = authenticator(); const first = await post('webauthn/register/options'); const other = await post('webauthn/register/options');
+  const ch = first.body.options.challenge; const body = auth.registration(ch,first.body.options.user.id);
+  expect((await post('webauthn/register/verify',body,cookies(other))).status).toBe(401);
+  expect((await db.query('SELECT used_at FROM authentication_challenges WHERE challenge=$1',[ch])).rows[0].used_at).toBeNull();
+  expect((await post('webauthn/register/verify',body,cookies(first))).status).toBe(200);
+});
+it('valid-shaped cryptographic failure burns challenge and a later valid signature is denied',async () => {
+  const { auth } = await enrolled(); const options = await post('webauthn/auth/options');
+  const ch = options.body.options.challenge; const valid = auth.authentication(ch);
+  const invalid = { ...valid,response: { ...valid.response,signature: 'invalid' } };
+  expect((await post('webauthn/auth/verify',invalid,cookies(options))).status).toBe(401);
+  expect((await db.query('SELECT used_at FROM authentication_challenges WHERE challenge=$1',[ch])).rows[0].used_at).not.toBeNull();
+  expect((await post('webauthn/auth/verify',valid,cookies(options))).status).toBe(401);
+});
+it.each(['staging','production'])('%s flow and real verified session cookies are Secure, HttpOnly, Path=/ and host-only',async mode => {
+  const trustedOrigin = 'https://example.com';
+  const secureApp = app(db,config({ LUXIA_RUNTIME_MODE: mode,WEBAUTHN_RP_ID: 'example.com',WEBAUTHN_ALLOWED_ORIGINS: trustedOrigin }));
+  const send = (path: string,body: object = {},cookie = '') => request(secureApp).post(`/api/${path}`).set('Origin',trustedOrigin)
+    .set('X-Luxia-Request','1').set('X-Forwarded-Proto','http').set('X-Forwarded-Host','evil.test').set('Referer','http://evil.test').set('Cookie',cookie).send(body);
+  const auth = authenticator(); const options = await send('webauthn/register/options');
+  const checkCookie = (value: string,name: string) => {
+    expect(value).toContain(`${name}=`); expect(value).toContain('; Secure'); expect(value).toContain('; HttpOnly');
+    expect(value).toContain('; Path=/'); expect(value).toContain('; SameSite=Strict'); expect(value).not.toMatch(/;\s*Domain=/i);
+  };
+  checkCookie(String(options.headers['set-cookie']),'__Host-luxia_flow');
+  expect((await send('webauthn/register/verify',auth.registration(options.body.options.challenge,options.body.options.user.id,trustedOrigin,'example.com'),cookies(options))).status).toBe(200);
+  const loginOptions = await send('webauthn/auth/options');
+  const result = await send('webauthn/auth/verify',auth.authentication(loginOptions.body.options.challenge,trustedOrigin,'example.com'),cookies(loginOptions));
+  expect(result.status).toBe(200); checkCookie(String(result.headers['set-cookie']),'__Host-luxia_session');
+  expect((await send('session/read',{},cookies(result))).status).toBe(200);
+  expect((await send('session/logout',{},cookies(result))).status).toBe(200);
+  expect((await send('session/read',{},cookies(result))).status).toBe(401);
 });

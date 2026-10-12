@@ -7,6 +7,7 @@ import type { Config } from './config.js';
 import { transaction } from './db.js';
 import { audit } from './audit.js';
 import { createSession, hash } from './sessions.js';
+import { WEBAUTHN_ALGORITHMS } from './algorithm-policy.js';
 export class Denied extends Error { constructor() { super('DENIED'); } }
 interface Challenge { challenge: string; origin: string; rp_id: string; user_id: string | null; display_name: string | null }
 export class WebAuthn {
@@ -17,7 +18,7 @@ export class WebAuthn {
     const options = purpose === 'registration'
       ? await generateRegistrationOptions({ rpName: 'LUXIA Key', rpID: this.cfg.rpID,
         userID: new TextEncoder().encode(user!), userName: user!, userDisplayName: displayName,
-        attestationType: 'none', supportedAlgorithmIDs: [-7, -257],
+        attestationType: 'none', supportedAlgorithmIDs: [...WEBAUTHN_ALGORITHMS],
         authenticatorSelection: { residentKey: 'required', userVerification: 'required' } })
       : await generateAuthenticationOptions({ rpID: this.cfg.rpID, userVerification: 'required' });
     await transaction(this.db, async client => {
@@ -46,7 +47,8 @@ export class WebAuthn {
   async register(response: RegistrationResponseJSON, origin: string, binding: string, correlation: string) {
     const ch = await this.consume(response.response.clientDataJSON,'registration',origin,binding);
     const result = await verifyRegistrationResponse({ response, expectedChallenge: ch.challenge,
-      expectedOrigin: ch.origin, expectedRPID: ch.rp_id, requireUserVerification: true });
+      expectedOrigin: ch.origin, expectedRPID: ch.rp_id, requireUserVerification: true,
+      supportedAlgorithmIDs: [...WEBAUTHN_ALGORITHMS] });
     if (!result.verified || !result.registrationInfo || !ch.user_id) throw new Denied();
     const { credential, credentialDeviceType, credentialBackedUp } = result.registrationInfo;
     return transaction(this.db, async client => {
