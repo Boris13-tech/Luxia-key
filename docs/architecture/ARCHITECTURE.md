@@ -3,7 +3,7 @@
 Status: Foundation V1 prepared for review, not a production release. This document owns boundaries and lifecycle; linked protocols own detailed rules; SQL migrations own physical schema. Other documents must link rather than redefine them.
 
 Browser SDK (`packages/sdk-js`) → same-origin HTTPS API (`services/api`) → SimpleWebAuthn server verification → portable PostgreSQL.
-The frozen React prototype stays at repository root until the staged migration. It is a demo, has no security authority, and does not import or invoke the API. The SDK has no simulation or local-server fallback.
+The React prototype stays at repository root until the staged migration. Its historical UX is preserved with only the documented HTTPS-link validation correction (../product/UX-SECURITY-PATCHES.md). It is a demo, has no security authority, and does not import or invoke the API. The SDK has no simulation or local-server fallback.
 
 API endpoints: POST /api/webauthn/register/options, register/verify, auth/options, auth/verify; POST /api/session/read, logout, revoke-all. JSON only, bounded body, exact configured Origin and X-Luxia-Request: 1, no cross-origin CORS. TLS terminates at a trusted same-origin reverse proxy in a future deployment; API binds loopback. Never trust arbitrary forwarded headers.
 

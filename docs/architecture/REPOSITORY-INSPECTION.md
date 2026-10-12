@@ -6,3 +6,5 @@ Security branch: in-memory DatabaseStore, seeded identity, public-key verificati
 Old CI run 37892838220 failed at setup-node npm-cache lookup because no npm lock existed (only bun.lock). Workflow also contained install fallback and ignored audit failure. None of those patterns were ported.
 Selective reapplication: retained the SimpleWebAuthn options/verify decomposition, public-key-only storage, cryptographically random hashed session concept, expiration/revocation and event categories. Reimplemented persistence, trust configuration, challenge binding, authorization, error handling and tests. No old branch file was blindly copied and no old UI changes imported.
 GitHub reported main unprotected. Architectural review and activation of required checks are merge blockers. No tags or production resources were modified.
+
+This is the initial read-only snapshot. The authorized follow-up later enabled and read back main protection and active scanning ruleset 24933031; see ../governance/ENGINEERING-GOVERNANCE.md. Main's code SHA did not change.
