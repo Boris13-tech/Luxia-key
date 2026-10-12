@@ -1,4 +1,4 @@
-import { beforeAll,afterAll,it,expect } from 'vitest';
+import { beforeAll,beforeEach,afterAll,it,expect } from 'vitest';
 import request from 'supertest';
 import { randomUUID } from 'node:crypto';
 import { pool,migrate } from '../../services/api/db.js';
@@ -9,11 +9,12 @@ const url = process.env.TEST_DATABASE_URL;
 if (!url || !new URL(url).pathname.endsWith('/luxia_test')) throw new Error('Dedicated TEST_DATABASE_URL ending /luxia_test required; tests never skip');
 const db = pool(url);
 const cfg = { rpID: 'localhost',origins: ['http://localhost:3000'],production: false };
-const api = app(db,cfg);
+let api = app(db,cfg);
 const origin = cfg.origins[0];
 const post = (path: string,body: object = {},cookie = '') => request(api).post(`/api/${path}`).set('Origin',origin).set('X-Luxia-Request','1').set('Cookie',cookie).send(body);
 const cookies = (res: { headers: Record<string,unknown> }) => (res.headers['set-cookie'] as string[]).map(x => x.split(';')[0]).join('; ');
 beforeAll(async () => { await migrate(db); });
+beforeEach(() => { api = app(db,cfg); }); // Isolated HTTP server/rate-limit state per case.
 afterAll(async () => { await db.end(); });
 async function enrolled() {
   const auth = authenticator();
@@ -102,4 +103,34 @@ it('CSRF and missing binding deny; persistence survives a new pool/API instance'
     expect(res.status).toBe(200);
   } finally { await restarted.end(); }
 });
-
+it('reauthentication rotates the presented session and revokes the old token',async () => {
+  const { auth } = await enrolled(); const first = await login(auth);
+  const options = await post('webauthn/auth/options');
+  const response = auth.authentication(options.body.options.challenge);
+  const result = await post('webauthn/auth/verify',response,`${cookies(options)}; ${first.session}`);
+  expect(result.status).toBe(200);
+  expect((await post('session/read',{},first.session)).status).toBe(401);
+  expect((await post('session/read',{},cookies(result))).status).toBe(200);
+});
+it('revoked credentials and missing state invalidate existing sessions',async () => {
+  const first = await enrolled(); const logged = await login(first.auth);
+  await db.query('UPDATE credentials SET revoked_at=now() WHERE id=$1',[first.auth.id]);
+  expect((await post('session/read',{},logged.session)).status).toBe(401);
+  const second = await enrolled(); const logged2 = await login(second.auth);
+  await db.query('DELETE FROM identity_security_states WHERE user_id=$1',[second.user]);
+  expect((await post('session/read',{},logged2.session)).status).toBe(401);
+});
+it('production cookies have Secure and __Host attributes',async () => {
+  const prod = app(db,{ rpID: 'example.com',origins: ['https://example.com'],production: true });
+  const result = await request(prod).post('/api/webauthn/register/options').set('Origin','https://example.com').set('X-Luxia-Request','1').send({});
+  expect(result.status).toBe(200);
+  expect(String(result.headers['set-cookie'])).toContain('__Host-luxia_flow=');
+  expect(String(result.headers['set-cookie'])).toContain('Secure');
+});
+it('unavailable database denies without fallback or raw diagnostic leakage',async () => {
+  const unavailable = pool(url); await unavailable.end();
+  const result = await request(app(unavailable,cfg)).post('/api/webauthn/auth/options').set('Origin',origin).set('X-Luxia-Request','1').send({});
+  expect(result.status).toBe(503);
+  expect(result.body.error).toBe('DEPENDENCY_UNAVAILABLE');
+  expect(JSON.stringify(result.body)).not.toContain(url);
+});
