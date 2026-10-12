@@ -1,0 +1,6 @@
+# LK-REVIEW-001 — original fixed-head review record
+
+Reviewer: distinct Codex agent /root/independent_foundation_review; not the author, not a human or eligible second GitHub account. Reviewed exact HEAD: be526ac341ad139f4140bb6eb8dd74e6abc0b501.
+Architecture FAIL; Security FAIL. Three Medium/P2 findings: R1 implicit deployment-mode cookie downgrade, R2 registration algorithm allowlist mismatch, R3 startup without exact migration validation. R4 is a Low/P3 malformed-request lifecycle contract mismatch. No High/Critical takeover was established.
+The reviewer independently ran 23 unit and 19 security tests plus typecheck. SQL CI evidence was inspected, not independently rerun locally; physical certification NOT RUN. Isolated probes identified the control-flow and actual library policy gaps. Full external report SHA-256: 896862c50387e00c446619c089779e306b6677580a68932852300adb2606663c.
+The autonomous mandate authorizes LK-REMEDIATION-001 and a new exact-head independent LK-REVIEW-002 after all gates. It does not authorize main merge, protection bypass, production or Phase 2. ADR 0001 documents the targeted correction decisions. The old reviewed commit and report remain immutable; this summary is provenance, not approval of a newer SHA.
